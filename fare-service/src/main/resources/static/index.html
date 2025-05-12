@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Razorpay Payment</title>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body>
+
+<h1>Book Flight</h1>
+<button onclick="payNow()">Pay</button>
+
+<script>
+    async function payNow() {
+      const response = await fetch("http://localhost:8080/booking/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: 1,
+        flightId: 1001,
+        seatCount: 2
+      })
+    });
+
+    const data = await response.json();
+
+    // ✅ Extract bookingId from the response
+    const orderId = data.orderId;
+    const bookingId = data.bookingId;  // <-- define it here
+    const amount = data.amount;
+    const key = data.key;
+
+    const options = {
+      key: key,
+      amount: amount,
+      currency: "INR",
+      name: "Flight Booking",
+      description: "Test Transaction",
+      order_id: orderId,
+      handler: function (response) {
+        alert("Payment successful! Payment ID: " + response.razorpay_payment_id);
+
+        // Optionally: Call your backend to confirm booking using bookingId
+        fetch(`http://localhost:8080/booking/confirm/${bookingId}`, {
+          method: "PUT"
+        });
+      },
+      notes: {
+        bookingId: bookingId
+      },
+      theme: {
+        color: "#3399cc"
+      }
+    };
+
+        const rzp = new Razorpay(options);
+        rzp.open();
+
+    }
+</script>
+
+</body>
+</html>
